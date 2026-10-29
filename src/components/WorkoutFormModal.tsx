@@ -2,6 +2,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { EXERCISES, EXERCISE_BY_ID } from "../data/exercises";
 import { CATEGORIES, CATEGORY_ORDER, DIFFICULTIES, DISTANCE_CATEGORIES, estimateCalories } from "../lib/categories";
+import { NOTES_MAX } from "../lib/plan-import";
 import { useData, type WorkoutInput } from "../state/store";
 import { useUi } from "../state/ui";
 import type { Category, Difficulty } from "../types";
@@ -250,7 +251,7 @@ export function WorkoutFormModal() {
         </div>
         <div className="sm:col-span-2">
           <Field id="wf-notes" label="Notes (optional)">
-            <textarea id="wf-notes" className="input min-h-20" rows={3} maxLength={500} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Targets, pace, how it felt…" />
+            <textarea id="wf-notes" className="input min-h-20" rows={3} maxLength={NOTES_MAX} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Targets, pace, how it felt…" />
           </Field>
         </div>
       </form>

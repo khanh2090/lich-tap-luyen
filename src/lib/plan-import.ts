@@ -15,15 +15,15 @@ const HEADERS: Record<Field, string[]> = {
   date: ["date", "ngay", "ngaytap", "ngaythang"],
   week: ["week", "weekno", "wk", "tuan", "tuanso"],
   weekday: ["day", "weekday", "dayofweek", "thu", "thutrongtuan"],
-  time: ["time", "starttime", "start", "gio", "giotap", "giobatdau", "batdau"],
+  time: ["time", "starttime", "start", "slot", "gio", "giotap", "giobatdau", "batdau", "buoi"],
   title: ["title", "name", "workout", "session", "baitap", "tenbai", "tenbaitap", "noidung", "buoitap", "ten"],
   category: ["type", "category", "sport", "discipline", "activity", "mon", "monthethao", "bomon", "loai", "loaibai"],
   duration: ["duration", "durationmin", "minutes", "mins", "min", "thoiluong", "thoigian", "phut"],
   distance: ["distance", "distancekm", "km", "culy", "quangduong"],
   difficulty: ["difficulty", "level", "intensity", "zone", "mucdo", "cuongdo", "dokho", "vung"],
-  notes: ["notes", "note", "details", "description", "ghichu", "chitiet", "mota", "huongdan"],
-  focus: ["focus", "target", "muctieu", "trongtam"],
-  done: ["done", "completed", "status", "hoanthanh", "trangthai", "xong"],
+  notes: ["notes", "note", "details", "description", "instructions", "purpose", "ghichu", "chitiet", "mota", "huongdan", "cachtap", "mucdich"],
+  focus: ["focus", "target", "muctieu", "trongtam", "loaibuoi"],
+  done: ["done", "completed", "status", "hoanthanh", "trangthai", "xong", "datap"],
 };
 
 export function normalize(text: string): string {
@@ -144,13 +144,14 @@ export function parseTime(c: Cell): string | null {
     const mins = Math.round(c * 24 * 60);
     return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
   }
+  // Find a clock time anywhere in the text: "Sáng sớm 6:00 (bật đèn)", "05:45 xuất phát", "6h30", "7pm".
   const s = normalize(text(c)).replace(/\s+/g, "");
-  const m = s.match(/^(\d{1,2})[:h](\d{2})?(am|pm)?$/);
+  const m = s.match(/(?:^|\D)(\d{1,2})(?::(\d{2})|h(\d{2})?|(?=am|pm))(am|pm)?/);
   if (!m) return null;
   let h = +m[1];
-  if (m[3] === "pm" && h < 12) h += 12;
-  if (m[3] === "am" && h === 12) h = 0;
-  const min = m[2] ? +m[2] : 0;
+  const min = +(m[2] ?? m[3] ?? 0);
+  if (m[4] === "pm" && h < 12) h += 12;
+  if (m[4] === "am" && h === 12) h = 0;
   return h < 24 && min < 60 ? `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}` : null;
 }
 
@@ -163,7 +164,8 @@ const CATEGORY_KEYWORDS: [Category, string[]][] = [
   ["strength", ["gym", "suc manh", "strength", "weights", "ta", "core", "lift", "squat", "deadlift"]],
   ["yoga", ["yoga", "pilates", "mobility", "stretch", "gian co", "keo gian"]],
   ["recovery", ["recovery", "hoi phuc", "massage", "foam", "phuc hoi"]],
-  ["cardio", ["cardio", "elliptical", "rowing", "cheo", "nhay day", "jump rope"]],
+  // Race day and multi-sport events have no single discipline; they count as cardio.
+  ["cardio", ["cardio", "elliptical", "rowing", "cheo", "nhay day", "jump rope", "dua", "race", "ironman", "triathlon", "duathlon"]],
 ];
 const REST_WORDS = ["nghi", "rest", "off", "day off", "nghi ngoi", "rest day"];
 
@@ -187,8 +189,12 @@ const isRest = (t: string) => {
 };
 
 export function parseDifficulty(c: Cell, fallback: Difficulty): Difficulty {
-  const n = normalize(text(c));
-  if (!n) return fallback;
+  const full = normalize(text(c));
+  if (!full) return fallback;
+  // Long intensity notes: classify by the summary ("Mức độ chung: NẶNG") or the first line only,
+  // so words like "warm up easy" further down don't decide the level.
+  const summary = full.match(/muc do chung\s*:?\s*([^\r\n]*)/);
+  const n = summary ? summary[1] : full.split(/\r?\n/)[0];
   if (matches(n, ["easy", "de", "nhe", "z1", "z2", "zone 1", "zone 2", "beginner", "thap", "recovery"])) return "Beginner";
   if (matches(n, ["hard", "kho", "nang", "cao", "z4", "z5", "zone 4", "zone 5", "advanced", "interval", "threshold", "max"])) return "Advanced";
   return "Intermediate";
@@ -262,25 +268,29 @@ function tableFromJson(value: unknown): Cell[][] {
   return [keys, ...list.map((o) => keys.map((k) => (o as Record<string, Cell>)[k]))];
 }
 
-export async function readTable(file: File): Promise<Cell[][]> {
+/** One sheet of a workbook (CSV and JSON files have a single unnamed table). */
+export interface SourceTable {
+  name?: string;
+  rows: Cell[][];
+}
+
+export async function readTables(file: File): Promise<SourceTable[]> {
   const ext = file.name.toLowerCase().split(".").pop();
   if (ext === "xlsx") {
     const { default: readXlsxFile } = await import("read-excel-file/browser");
     const sheets = await readXlsxFile(file);
-    // Use the first sheet that has any rows.
-    const sheet = sheets.find((s) => s.data.length > 1) ?? sheets[0];
-    return (sheet?.data ?? []) as Cell[][];
+    return sheets.map((s) => ({ name: s.sheet, rows: s.data as Cell[][] }));
   }
   if (ext === "xls") throw new Error("Old .xls files aren't supported — in Excel use File › Save As › Excel Workbook (.xlsx) or CSV UTF-8.");
   const content = decode(await file.arrayBuffer());
   if (ext === "json") {
     try {
-      return tableFromJson(JSON.parse(content));
+      return [{ rows: tableFromJson(JSON.parse(content)) }];
     } catch (e) {
       throw new Error(e instanceof SyntaxError ? "This JSON file couldn't be read — check it's valid JSON." : (e as Error).message);
     }
   }
-  return parseCsv(content);
+  return [{ rows: parseCsv(content) }];
 }
 
 // ---------- rows → sessions ----------
@@ -311,24 +321,56 @@ export interface ParsedPlan {
   /** True when rows are positioned by week + weekday and need a start date */
   usesWeeks: boolean;
   recognized: Field[];
+  /** Workbook sheet the sessions were read from */
+  sheet?: string;
 }
+
+/** Imported plans often carry step-by-step instructions; keep them, within reason. */
+export const NOTES_MAX = 2000;
 
 const PACE_MIN_PER_KM: Partial<Record<Category, number>> = { running: 6, cycling: 2.4, swimming: 25 };
 
-export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; durationMin: number }): ParsedPlan {
-  const headerIndex = table.slice(0, 15).findIndex((r) => r.filter((c) => fieldForHeader(text(c))).length >= 2);
-  if (headerIndex < 0) {
-    throw new Error("Couldn't find a header row. The first row should name the columns, e.g. Date / Week, Day, Workout, Type, Duration.");
-  }
-  // A field may come from several columns (e.g. JSON rows mixing "duration" and "durationMin").
+interface HeaderCandidate {
+  table: SourceTable;
+  index: number;
+  /** A field may come from several columns (e.g. JSON rows mixing "duration" and "durationMin"). */
+  columns: Map<Field, number[]>;
+  placeable: boolean;
+  score: number;
+}
+
+function headerCandidate(table: SourceTable, index: number): HeaderCandidate {
   const columns = new Map<Field, number[]>();
-  table[headerIndex].forEach((c, i) => {
+  table.rows[index].forEach((c, i) => {
     const f = fieldForHeader(text(c));
     if (f) columns.set(f, [...(columns.get(f) ?? []), i]);
   });
-  if (!columns.has("date") && !(columns.has("week") && columns.has("weekday"))) {
-    throw new Error("Add a Date column, or both Week and Day columns, so each session can be placed on the calendar.");
+  const placeable = columns.has("date") || (columns.has("week") && columns.has("weekday"));
+  const dataRows = table.rows.length - index - 1;
+  // Prefer a header that can place sessions on the calendar, then the richest one, then the longest table.
+  return { table, index, columns, placeable, score: (placeable ? 1000 : 0) + columns.size * 10 + Math.min(dataRows, 500) / 100 };
+}
+
+/** Finds the sheet and header row that look most like a training schedule. */
+function findHeader(tables: SourceTable[]): HeaderCandidate {
+  const candidates = tables
+    .flatMap((t) => t.rows.slice(0, 15).map((_, i) => headerCandidate(t, i)))
+    .filter((c) => c.columns.size >= 2)
+    .sort((a, b) => b.score - a.score);
+  const best = candidates[0];
+  if (!best) {
+    throw new Error("Couldn't find a header row. The first row should name the columns, e.g. Date / Week, Day, Workout, Type, Duration.");
   }
+  if (!best.placeable) {
+    const where = best.table.name ? ` (looked in every sheet; best match was “${best.table.name}”)` : "";
+    throw new Error(`Add a Date column, or both Week and Day columns, so each session can be placed on the calendar${where}.`);
+  }
+  return best;
+}
+
+export function parsePlan(tables: SourceTable[], defaults: { difficulty: Difficulty; durationMin: number }): ParsedPlan {
+  const { table: source, index: headerIndex, columns } = findHeader(tables);
+  const table = source.rows;
 
   const filled = (c: Cell) => c instanceof Date || typeof c === "number" || typeof c === "boolean" || text(c) !== "";
   const get = (r: Cell[], f: Field): Cell => {
@@ -336,6 +378,8 @@ export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; d
     if (!idx) return undefined;
     return r[idx.find((i) => filled(r[i])) ?? idx[0]];
   };
+  /** Every non-empty text for a field, in column order (notes can span several columns). */
+  const getAll = (r: Cell[], f: Field): string[] => (columns.get(f) ?? []).map((i) => text(r[i])).filter(Boolean);
   // In a Vietnamese "Thứ" column a bare 2 means Monday (Thứ 2), not ISO Tuesday.
   const vietnameseWeekdays = columns.has("weekday") && compact(text(table[headerIndex][columns.get("weekday")![0]])).startsWith("thu");
   const rows: ImportRow[] = [];
@@ -349,9 +393,12 @@ export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; d
 
     const titleText = text(get(r, "title"));
     const categoryText = text(get(r, "category"));
-    const notes = text(get(r, "notes")) || undefined;
     const rawDuration = get(r, "duration");
     const duration = parseDuration(rawDuration);
+    const rawDistance = get(r, "distance");
+
+    // Section rows such as "TUẦN 1 · 16/11 – 22/11" carry no session details.
+    if (!titleText && !categoryText && !filled(rawDuration) && !filled(rawDistance)) return;
 
     if ((isRest(categoryText) || (!categoryText && isRest(titleText))) && !duration) {
       restDays++;
@@ -368,6 +415,14 @@ export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; d
       errors.push(text(rawDate) ? `Unrecognised date “${text(rawDate)}”` : "Missing date (or week + day)");
     }
 
+    const rawTime = get(r, "time");
+    const time = parseTime(rawTime) ?? undefined;
+    const slot = text(rawTime);
+    // Keep descriptive slots ("Ngay sau khi chạy", "Sáng sớm 6:00 (bật đèn)") with the session.
+    const slotNote = slot && /\p{L}{2,}/u.test(slot) && slot !== "—" ? `Buổi: ${slot}` : "";
+    const intensityText = text(get(r, "difficulty"));
+    const notes = [...getAll(r, "notes"), intensityText, slotNote].filter(Boolean).join("\n\n") || undefined;
+
     let category = detectCategory(categoryText) ?? detectCategory(titleText, notes ?? "");
     if (!category) {
       category = "cardio";
@@ -376,8 +431,8 @@ export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; d
       warnings.push(`Type “${categoryText}” guessed as ${CATEGORIES[category].label} from the title`);
     }
 
-    const distance = get(r, "distance") !== undefined ? parseDistance(get(r, "distance"), category) : null;
-    if (text(get(r, "distance")) && distance === null) warnings.push(`Ignored distance “${text(get(r, "distance"))}”`);
+    const distance = rawDistance !== undefined ? parseDistance(rawDistance, category) : null;
+    if (text(rawDistance) && distance === null) warnings.push(`Ignored distance “${text(rawDistance)}”`);
 
     let durationMin = duration;
     if (durationMin === null) {
@@ -391,10 +446,6 @@ export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; d
       }
     }
     if (durationMin !== null && (durationMin < 1 || durationMin > 600)) errors.push("Duration must be 1–600 minutes");
-
-    const rawTime = get(r, "time");
-    const time = parseTime(rawTime) ?? undefined;
-    if (text(rawTime) && !time) warnings.push(`Ignored start time “${text(rawTime)}”`);
 
     const difficulty = parseDifficulty(get(r, "difficulty"), defaults.difficulty);
     const minutes = durationMin ?? defaults.durationMin;
@@ -414,7 +465,7 @@ export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; d
       difficulty,
       calories: estimateCalories(category, minutes, difficulty),
       focus: text(get(r, "focus")) || (titleText && categoryText && !detectCategory(categoryText) ? categoryText : undefined),
-      notes: notes?.slice(0, 500),
+      notes: notes?.slice(0, NOTES_MAX),
       done: get(r, "done") !== undefined && parseDone(get(r, "done")),
       warnings,
       errors,
@@ -424,9 +475,18 @@ export function parsePlan(table: Cell[][], defaults: { difficulty: Difficulty; d
   return {
     rows,
     restDays,
+    sheet: source.name,
     usesWeeks: rows.some((r) => !r.date && r.week !== null && r.weekday !== null),
     recognized: [...columns.keys()],
   };
+}
+
+/** A workbook's title line (a lone text cell at the top of the first sheet), else the file name. */
+export function suggestPlanName(tables: SourceTable[], fileName: string): string {
+  const top = (tables[0]?.rows[0] ?? []).filter((c) => text(c) !== "");
+  const title = top.length === 1 ? text(top[0]) : "";
+  if (title.length >= 4 && title.length <= 60 && !fieldForHeader(title)) return title;
+  return fileName.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
 }
 
 /** Week 1 starts on the Monday of the week containing `startDate`. */

@@ -40,7 +40,8 @@ export function toExport(workouts: Workout[], today = todayKey()): ExportedWorko
       title: w.title,
       duration: w.durationMin,
       distance: w.distanceKm ?? null,
-      details: [w.focus, w.notes].filter(Boolean).join(" — "),
+      // Phone notifications stay readable: only the start of long imported instructions.
+      details: [w.focus, w.notes].filter(Boolean).join(" — ").slice(0, 300),
       done: w.status === "completed",
     }));
 }

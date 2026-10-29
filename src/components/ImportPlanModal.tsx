@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { CATEGORIES } from "../lib/categories";
 import { formatDay } from "../lib/dates";
 import { formatDistance, formatMinutes } from "../lib/format";
-import { nextMonday, parsePlan, readTable, resolveDate, TEMPLATE_CSV, type ParsedPlan } from "../lib/plan-import";
+import { nextMonday, parsePlan, readTables, resolveDate, suggestPlanName, TEMPLATE_CSV, type ParsedPlan } from "../lib/plan-import";
 import { useData } from "../state/store";
 import { useUi } from "../state/ui";
 import type { Category } from "../types";
@@ -52,8 +52,9 @@ export function ImportPlanModal() {
     setReading(true);
     setName(f.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim());
     try {
-      const table = await readTable(f);
-      const plan = parsePlan(table, { difficulty: data.profile.experience, durationMin: data.profile.preferredDurationMin });
+      const tables = await readTables(f);
+      setName(suggestPlanName(tables, f.name));
+      const plan = parsePlan(tables, { difficulty: data.profile.experience, durationMin: data.profile.preferredDurationMin });
       if (plan.rows.length === 0) throw new Error("No sessions found under the header row.");
       setParsed(plan);
     } catch (e) {
@@ -242,6 +243,7 @@ export function ImportPlanModal() {
                   <XCircle className="size-3.5" /> {preview.errors} skipped
                 </span>
               )}
+              {parsed.sheet && <span className="tag">Sheet “{parsed.sheet}”</span>}
               {parsed.restDays > 0 && <span className="tag">{parsed.restDays} rest {parsed.restDays === 1 ? "day" : "days"}</span>}
               {preview.first && (
                 <span className="tag">
