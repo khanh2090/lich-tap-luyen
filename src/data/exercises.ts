@@ -159,6 +159,24 @@ export const EXERCISES: Exercise[] = [
     description: "Easy aerobic spin that grows your engine without the fatigue.",
   },
   {
+    id: "ex-open-water", name: "Open Water Endurance Swim", category: "swimming", muscleGroups: ["Back", "Shoulders", "Cardio"],
+    equipment: "Wetsuit", difficulty: "Intermediate", durationMin: 45, distanceKm: 2, popularity: 1240,
+    image: "1438029071396-1e831a7fa6d8",
+    description: "Continuous freestyle with sighting every 6–8 strokes. Race-specific practice for triathlon swims.",
+  },
+  {
+    id: "ex-swim-technique", name: "Freestyle Technique Drills", category: "swimming", muscleGroups: ["Shoulders", "Core"],
+    equipment: "Pool", difficulty: "Beginner", durationMin: 40, distanceKm: 1.5, popularity: 1660,
+    image: "1530549387789-4c1017266635",
+    description: "Catch-up, fingertip drag and 6-kick switch drills to build an efficient, relaxed stroke.",
+  },
+  {
+    id: "ex-swim-intervals", name: "Threshold 100s", category: "swimming", muscleGroups: ["Back", "Shoulders", "Cardio"],
+    equipment: "Pool", difficulty: "Advanced", durationMin: 50, sets: 15, distanceKm: 2.5, popularity: 970,
+    image: "1622629797619-c100e3e67e2e",
+    description: "15 × 100m at threshold pace with 15 seconds rest. Builds the speed you can hold all race.",
+  },
+  {
     id: "ex-breathwork", name: "Guided Breathwork", category: "recovery", muscleGroups: ["Mind", "Diaphragm"],
     equipment: "None", difficulty: "Beginner", durationMin: 10, popularity: 1490,
     image: "1506126613408-eca07ce68773",

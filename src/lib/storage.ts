@@ -36,7 +36,8 @@ function writeJson(key: string, value: unknown): boolean {
 export class LocalStorageRepository implements DataRepository {
   async load(): Promise<AppData> {
     const saved = readJson<AppData>(DATA_KEY);
-    if (saved && saved.version === 1) return saved;
+    // Data saved before training plans existed has no `plans` list yet.
+    if (saved && saved.version === 1) return { ...saved, plans: saved.plans ?? [] };
     const seed = createSeedData();
     writeJson(DATA_KEY, seed);
     return seed;

@@ -149,5 +149,6 @@ export function createSeedData(): AppData {
     favorites: ["ex-deadlift", "ex-tempo-run", "ex-vinyasa-flow"],
     joinedChallenges: ["ch-consistency", "ch-run-100", "ch-streak-21"],
     posts: seedPosts(),
+    plans: [],
   };
 }

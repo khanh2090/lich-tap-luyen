@@ -6,6 +6,8 @@ import type { WorkoutInput } from "./store";
 export type Page = "overview" | "workouts" | "library" | "schedule" | "progress" | "challenges" | "community" | "settings";
 export const PAGES: Page[] = ["overview", "workouts", "library", "schedule", "progress", "challenges", "community", "settings"];
 
+export type ScheduleView = "week" | "month" | "plan";
+
 export type WorkoutModal =
   | { mode: "create"; prefill?: Partial<WorkoutInput> }
   | { mode: "edit"; workout: Workout }
@@ -27,6 +29,13 @@ interface Ui {
   setGoalModal(open: boolean): void;
   exerciseDetail: Exercise | null;
   setExerciseDetail(e: Exercise | null): void;
+  importOpen: boolean;
+  setImportOpen(open: boolean): void;
+  scheduleView: ScheduleView;
+  setScheduleView(v: ScheduleView): void;
+  /** Plan shown in the schedule's Plan view */
+  selectedPlanId: string | null;
+  setSelectedPlanId(id: string | null): void;
 }
 
 const UiContext = createContext<Ui | null>(null);
@@ -49,6 +58,9 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const [workoutModal, setWorkoutModal] = useState<WorkoutModal | null>(null);
   const [goalModal, setGoalModal] = useState(false);
   const [exerciseDetail, setExerciseDetail] = useState<Exercise | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [scheduleView, setScheduleView] = useState<ScheduleView>("week");
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
   // Hash routing keeps the back button and deep links working without a router dependency.
   useEffect(() => {
@@ -82,6 +94,12 @@ export function UiProvider({ children }: { children: ReactNode }) {
         setGoalModal,
         exerciseDetail,
         setExerciseDetail,
+        importOpen,
+        setImportOpen,
+        scheduleView,
+        setScheduleView,
+        selectedPlanId,
+        setSelectedPlanId,
       }}
     >
       {children}

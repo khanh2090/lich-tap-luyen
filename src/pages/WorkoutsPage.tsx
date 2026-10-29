@@ -1,4 +1,4 @@
-import { Clock, Dumbbell, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Clock, Dumbbell, FileUp, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDelete, useNow, volumeLabel, WorkoutActions, workoutImage } from "../components/WorkoutCard";
 import { CategoryTag, DifficultyMeter, EmptyState, PageHeader, ProgressBar, Segmented, SmartImage, StatusPill } from "../components/ui/primitives";
@@ -65,7 +65,7 @@ const MATCH: Record<Filter, (s: WorkoutStatus) => boolean> = {
 
 export function WorkoutsPage() {
   const { data, today } = useData();
-  const { openWorkoutModal } = useUi();
+  const { openWorkoutModal, setImportOpen } = useUi();
   const [filter, setFilter] = useState<Filter>("upcoming");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | "all">("all");
@@ -104,9 +104,14 @@ export function WorkoutsPage() {
         title="My Workouts"
         description="Everything you've planned and everything you've crushed, in one place."
         action={
-          <button className="btn btn-primary" onClick={() => openWorkoutModal({ mode: "create" })}>
-            <Plus className="size-5" /> Create Workout
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button className="btn btn-secondary" onClick={() => setImportOpen(true)}>
+              <FileUp className="size-5" /> Import plan
+            </button>
+            <button className="btn btn-primary" onClick={() => openWorkoutModal({ mode: "create" })}>
+              <Plus className="size-5" /> Create Workout
+            </button>
+          </div>
         }
       />
 

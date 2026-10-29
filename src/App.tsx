@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { ExerciseDetailModal } from "./components/ExerciseCard";
 import { GoalModal } from "./components/GoalModal";
 import { Header } from "./components/Header";
+import { ImportPlanModal } from "./components/ImportPlanModal";
 import { MobileNav, Sidebar } from "./components/Navigation";
 import { WorkoutFormModal } from "./components/WorkoutFormModal";
 import { ChallengesPage } from "./pages/ChallengesPage";
@@ -73,6 +74,7 @@ export default function App() {
       <WorkoutFormModal />
       <GoalModal />
       <ExerciseDetailModal />
+      <ImportPlanModal />
     </div>
   );
 }

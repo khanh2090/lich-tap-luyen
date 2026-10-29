@@ -1,4 +1,4 @@
-import { Bike, BatteryCharging, Dumbbell, Flower2, Footprints, HeartPulse, Zap, type LucideIcon } from "lucide-react";
+import { Bike, BatteryCharging, Dumbbell, Flower2, Footprints, HeartPulse, Waves, Zap, type LucideIcon } from "lucide-react";
 import type { Category, Difficulty } from "../types";
 
 export const unsplash = (id: string, width = 800) =>
@@ -22,10 +22,11 @@ export const CATEGORIES: Record<Category, CategoryMeta> = {
   yoga: { label: "Yoga & Mobility", icon: Flower2, color: "#F0ABFC", kcalPerMin: 4, image: "1600881333168-2ef49b341f30" },
   running: { label: "Running", icon: Footprints, color: "#C6FF3D", kcalPerMin: 11, image: "1486218119243-13883505764c" },
   cycling: { label: "Cycling", icon: Bike, color: "#42E8E0", kcalPerMin: 9, image: "1517649763962-0c623066013b" },
+  swimming: { label: "Swimming", icon: Waves, color: "#3B82F6", kcalPerMin: 10, image: "1438029071396-1e831a7fa6d8" },
   recovery: { label: "Recovery", icon: BatteryCharging, color: "#94A3B8", kcalPerMin: 3, image: "1506126613408-eca07ce68773" },
 };
 
-export const CATEGORY_ORDER: Category[] = ["strength", "cardio", "hiit", "yoga", "running", "cycling", "recovery"];
+export const CATEGORY_ORDER: Category[] = ["strength", "cardio", "hiit", "yoga", "running", "cycling", "swimming", "recovery"];
 
 export const DIFFICULTIES: Difficulty[] = ["Beginner", "Intermediate", "Advanced"];
 
@@ -36,4 +37,4 @@ export function estimateCalories(category: Category, durationMin: number, diffic
 }
 
 /** Categories where distance is the natural volume metric. */
-export const DISTANCE_CATEGORIES: Category[] = ["running", "cycling"];
+export const DISTANCE_CATEGORIES: Category[] = ["running", "cycling", "swimming"];

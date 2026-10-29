@@ -259,8 +259,8 @@ function WeekPicker() {
 
 export function Header() {
   const { data } = useData();
-  const { page, navigate, openWorkoutModal } = useUi();
-  const showWeek = page === "overview" || page === "schedule";
+  const { page, navigate, openWorkoutModal, scheduleView } = useUi();
+  const showWeek = page === "overview" || (page === "schedule" && scheduleView !== "plan");
   const [mobileSearch, setMobileSearch] = useState(false);
   const first = data.profile.name.split(" ")[0] || "athlete";
 

@@ -12,6 +12,7 @@ const TYPES = {
   yoga: "🧘 Yoga & Mobility",
   running: "🏃 Chạy bộ",
   cycling: "🚴 Đạp xe",
+  swimming: "🏊 Bơi",
   recovery: "🔋 Hồi phục",
   other: "⭐ Khác",
 };

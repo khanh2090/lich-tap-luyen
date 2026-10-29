@@ -5,7 +5,7 @@ import { todayKey } from "../lib/dates";
 import { initials, newId } from "../lib/format";
 import { pushSchedule } from "../lib/github-sync";
 import { loadSyncSettings, loadUiMemory, repository, saveSyncSettings, saveUiMemory } from "../lib/storage";
-import type { AppData, Challenge, CommunityPost, Profile, SyncSettings, Workout } from "../types";
+import type { AppData, Challenge, CommunityPost, Profile, SyncSettings, TrainingPlan, Workout } from "../types";
 import { useToast } from "./toast";
 
 export type WorkoutInput = Omit<Workout, "id" | "status" | "startedAt"> & { status?: Workout["status"] };
@@ -27,6 +27,9 @@ interface Store {
   addPost(post: Pick<CommunityPost, "text" | "workoutTitle" | "category" | "stat">): void;
   toggleKudos(id: string): void;
   resetData(): Promise<void>;
+  /** Adds a plan and its sessions; when `replacePlanId` is given that plan and its sessions are removed first. */
+  importPlan(plan: Pick<TrainingPlan, "name" | "sourceFile">, sessions: WorkoutInput[], replacePlanId?: string): string;
+  deletePlan(planId: string): void;
   sync: SyncState & { settings: SyncSettings | null; configure(s: SyncSettings | null): void; syncNow(): Promise<void> };
 }
 
@@ -177,6 +180,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ...d,
         posts: d.posts.map((p) => (p.id === id ? { ...p, kudoed: !p.kudoed, kudos: p.kudos + (p.kudoed ? -1 : 1) } : p)),
       })),
+    importPlan: (plan, sessions, replacePlanId) => {
+      const planId = newId("plan");
+      mutate(
+        (d) => ({
+          ...d,
+          plans: [...d.plans.filter((p) => p.id !== replacePlanId), { ...plan, id: planId, importedAt: new Date().toISOString() }],
+          workouts: [
+            ...d.workouts.filter((w) => !replacePlanId || w.planId !== replacePlanId),
+            ...sessions.map((s, i) => ({ ...s, id: `${planId}-${i}`, planId, status: s.status ?? "scheduled" })),
+          ],
+        }),
+        `Imported ${sessions.length} sessions into “${plan.name}”`,
+      );
+      return planId;
+    },
+    deletePlan: (planId) =>
+      mutate(
+        (d) => ({ ...d, plans: d.plans.filter((p) => p.id !== planId), workouts: d.workouts.filter((w) => w.planId !== planId) }),
+        "Plan deleted",
+      ),
     resetData: async () => {
       dirty.current = false;
       setData(await repository.reset());

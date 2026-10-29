@@ -1,4 +1,4 @@
-export type Category = "strength" | "cardio" | "hiit" | "yoga" | "running" | "cycling" | "recovery";
+export type Category = "strength" | "cardio" | "hiit" | "yoga" | "running" | "cycling" | "swimming" | "recovery";
 export type Difficulty = "Beginner" | "Intermediate" | "Advanced";
 /** Stored status. "missed" is derived: a scheduled workout whose date has passed. */
 export type StoredStatus = "scheduled" | "in_progress" | "completed";
@@ -24,6 +24,8 @@ export interface Workout {
   distanceKm?: number;
   exerciseId?: string;
   notes?: string;
+  /** Set when the workout came from an imported training plan */
+  planId?: string;
 }
 
 export interface Exercise {
@@ -92,6 +94,14 @@ export interface SyncSettings {
   lastSyncedAt?: string;
 }
 
+/** A training plan imported from a file; its sessions are Workouts with this planId. */
+export interface TrainingPlan {
+  id: string;
+  name: string;
+  sourceFile: string;
+  importedAt: string;
+}
+
 export interface AppData {
   version: 1;
   profile: Profile;
@@ -99,4 +109,5 @@ export interface AppData {
   favorites: string[];
   joinedChallenges: string[];
   posts: CommunityPost[];
+  plans: TrainingPlan[];
 }

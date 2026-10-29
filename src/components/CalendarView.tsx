@@ -7,6 +7,7 @@ import { useData } from "../state/store";
 import { useUi } from "../state/ui";
 import type { Workout, WorkoutStatus } from "../types";
 import { Segmented, StatusPill } from "./ui/primitives";
+import { PlanTimeline } from "./PlanTimeline";
 import { WorkoutActions } from "./WorkoutCard";
 
 const STATUS_ICON: Partial<Record<WorkoutStatus, typeof Check>> = { completed: Check, missed: X, scheduled: Clock, in_progress: Clock };
@@ -80,8 +81,7 @@ function DayPanel({ date, workouts, onClose }: { date: string; workouts: Workout
 
 export function CalendarView() {
   const { data, today } = useData();
-  const { weekStart, setWeekStart, openWorkoutModal } = useUi();
-  const [view, setView] = useState<"week" | "month">("week");
+  const { weekStart, setWeekStart, openWorkoutModal, scheduleView: view, setScheduleView: setView } = useUi();
   const [month, setMonth] = useState(() => startOfMonth(today));
   const [selected, setSelected] = useState<string | null>(today);
 
@@ -112,20 +112,24 @@ export function CalendarView() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1">
-          <button className="icon-btn" onClick={() => shift(-1)} aria-label={`Previous ${view}`}>
-            <ChevronLeft className="size-5" />
-          </button>
-          <button className="icon-btn" onClick={() => shift(1)} aria-label={`Next ${view}`}>
-            <ChevronRight className="size-5" />
-          </button>
-        </div>
-        <h2 className="display text-lg font-bold text-ink sm:text-xl" aria-live="polite">
-          {title}
-        </h2>
-        <button className="btn btn-ghost btn-sm" onClick={goToday}>
-          Today
-        </button>
+        {view !== "plan" && (
+          <>
+            <div className="flex items-center gap-1">
+              <button className="icon-btn" onClick={() => shift(-1)} aria-label={`Previous ${view}`}>
+                <ChevronLeft className="size-5" />
+              </button>
+              <button className="icon-btn" onClick={() => shift(1)} aria-label={`Next ${view}`}>
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
+            <h2 className="display text-lg font-bold text-ink sm:text-xl" aria-live="polite">
+              {title}
+            </h2>
+            <button className="btn btn-ghost btn-sm" onClick={goToday}>
+              Today
+            </button>
+          </>
+        )}
         <div className="ml-auto">
           <Segmented
             label="Calendar view"
@@ -134,11 +138,16 @@ export function CalendarView() {
             options={[
               { value: "week", label: "Week" },
               { value: "month", label: "Month" },
+              { value: "plan", label: `Full plan${data.plans.length ? ` (${data.plans.length})` : ""}` },
             ]}
           />
         </div>
       </div>
 
+      {view === "plan" ? (
+        <PlanTimeline />
+      ) : (
+        <>
       <div className="card overflow-hidden">
         <div className="grid grid-cols-7 border-b border-line bg-surface/50">
           {rangeKeys(startOfWeek(today), 7).map((d) => (
@@ -226,6 +235,8 @@ export function CalendarView() {
       </div>
 
       {selected && <DayPanel date={selected} workouts={byDate.get(selected) ?? []} onClose={() => setSelected(null)} />}
+        </>
+      )}
     </div>
   );
 }
