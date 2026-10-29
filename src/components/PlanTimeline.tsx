@@ -1,9 +1,10 @@
-import { CalendarRange, Check, Download, FileUp, Trash2, X } from "lucide-react";
+import { CalendarRange, Check, Clock, Download, FileUp, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CATEGORIES, CATEGORY_ORDER } from "../lib/categories";
 import { addDays, daysBetween, formatDay, fromKey, rangeKeys, startOfWeek } from "../lib/dates";
 import { formatDistance, formatMinutes } from "../lib/format";
+import { arrangeDay, SLOT_BY_ID, sortByDateAndSlot } from "../lib/slots";
 import { statusOf, totals } from "../lib/stats";
 import { CHART_THEME, prefersReducedMotion } from "../lib/theme";
 import { useData } from "../state/store";
@@ -38,6 +39,29 @@ function SessionChip({ w }: { w: Workout }) {
   );
 }
 
+/** A day's sessions split into parts of the day, each under a small Sáng/Trưa/Chiều/Tối label. */
+function DaySlots({ ws }: { ws: Workout[] }) {
+  return (
+    <div className="space-y-1.5">
+      {arrangeDay(ws).map((g) => {
+        const meta = g.slot ? SLOT_BY_ID[g.slot] : null;
+        const Icon = meta?.icon ?? Clock;
+        return (
+          <div key={g.slot ?? "any"} className="space-y-1">
+            <p className="flex items-center gap-1 text-[0.62rem] font-bold tracking-wide text-muted uppercase" title={meta ? `${meta.label} · ${meta.hint}` : "No time set"}>
+              <Icon className="size-3 text-lime-ink" aria-hidden />
+              {meta ? meta.vi : "Bất kỳ"}
+            </p>
+            {g.workouts.map((s) => (
+              <SessionChip key={s.id} w={s} />
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const SPORT_ORDER: Category[] = ["swimming", "cycling", "running", ...CATEGORY_ORDER.filter((c) => !["swimming", "cycling", "running"].includes(c))];
 
 export function PlanTimeline() {
@@ -49,7 +73,7 @@ export function PlanTimeline() {
 
   const plan = data.plans.find((p) => p.id === selectedPlanId) ?? data.plans[data.plans.length - 1];
   const sessions = useMemo(
-    () => (plan ? data.workouts.filter((w) => w.planId === plan.id).sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "99").localeCompare(b.time ?? "99")) : []),
+    () => (plan ? sortByDateAndSlot(data.workouts.filter((w) => w.planId === plan.id)) : []),
     [data.workouts, plan],
   );
 
@@ -259,7 +283,7 @@ export function PlanTimeline() {
                         {formatDay(d, { weekday: "short" })} {fromKey(d).getDate()}
                       </p>
                       <div className="space-y-1">
-                        {ds.length ? ds.map((s) => <SessionChip key={s.id} w={s} />) : <p className="text-[0.7rem] text-muted/60">Rest</p>}
+                        {ds.length ? <DaySlots ws={ds} /> : <p className="text-[0.7rem] text-muted/60">Rest</p>}
                       </div>
                     </div>
                   );
@@ -274,7 +298,7 @@ export function PlanTimeline() {
                         {formatDay(d, { weekday: "short" })}
                         <span className="block text-base text-ink">{fromKey(d).getDate()}</span>
                       </span>
-                      <div className="flex-1 space-y-1">{ds.length ? ds.map((s) => <SessionChip key={s.id} w={s} />) : <p className="pt-1.5 text-xs text-muted/60">Rest day</p>}</div>
+                      <div className="flex-1 space-y-1">{ds.length ? <DaySlots ws={ds} /> : <p className="pt-1.5 text-xs text-muted/60">Rest day</p>}</div>
                     </li>
                   );
                 })}

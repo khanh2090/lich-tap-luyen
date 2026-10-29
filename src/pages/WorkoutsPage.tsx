@@ -4,6 +4,7 @@ import { ConfirmDelete, useNow, volumeLabel, WorkoutActions, workoutImage } from
 import { CategoryTag, DifficultyMeter, EmptyState, PageHeader, ProgressBar, Segmented, SmartImage, StatusPill } from "../components/ui/primitives";
 import { CATEGORIES, CATEGORY_ORDER } from "../lib/categories";
 import { relativeDayLabel } from "../lib/dates";
+import { sortDay } from "../lib/slots";
 import { liveProgress, statusOf } from "../lib/stats";
 import { useData } from "../state/store";
 import { useUi } from "../state/ui";
@@ -94,7 +95,7 @@ export function WorkoutsPage() {
       });
     const map = new Map<string, Workout[]>();
     for (const w of list) map.set(w.date, [...(map.get(w.date) ?? []), w]);
-    return [...map.entries()];
+    return [...map.entries()].map(([d, ws]) => [d, sortDay(ws)] as const);
   }, [data.workouts, filter, category, query, today]);
 
   return (

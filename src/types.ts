@@ -3,6 +3,8 @@ export type Difficulty = "Beginner" | "Intermediate" | "Advanced";
 /** Stored status. "missed" is derived: a scheduled workout whose date has passed. */
 export type StoredStatus = "scheduled" | "in_progress" | "completed";
 export type WorkoutStatus = StoredStatus | "missed";
+/** Part of the day a session belongs to ("buổi"). */
+export type Slot = "morning" | "noon" | "afternoon" | "evening";
 
 export interface Workout {
   id: string;
@@ -12,6 +14,8 @@ export interface Workout {
   date: string;
   /** Optional start time, HH:MM */
   time?: string;
+  /** Chosen part of the day; when absent it is derived from `time` */
+  slot?: Slot;
   durationMin: number;
   difficulty: Difficulty;
   calories: number;

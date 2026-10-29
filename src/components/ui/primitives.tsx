@@ -1,6 +1,30 @@
+import { Clock } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { CATEGORIES, unsplash } from "../../lib/categories";
-import type { Category, Difficulty, WorkoutStatus } from "../../types";
+import { SLOT_BY_ID } from "../../lib/slots";
+import type { Category, Difficulty, Slot, WorkoutStatus } from "../../types";
+
+/** Part-of-day label: icon + English name (+ Vietnamese "buổi" and hours when there is room). */
+export function SlotLabel({ slot, withHint = false, className = "" }: { slot: Slot | null; withHint?: boolean; className?: string }) {
+  const meta = slot ? SLOT_BY_ID[slot] : null;
+  const Icon = meta?.icon ?? Clock;
+  return (
+    <span className={`flex items-start gap-1.5 ${className}`} title={meta ? `${meta.label} (${meta.vi}) · ${meta.hint}` : "No time set"}>
+      <Icon className="mt-px size-4 shrink-0 text-lime-ink" aria-hidden />
+      <span className={withHint ? "max-sm:sr-only" : ""}>
+        <span className="block text-xs font-bold text-ink">
+          {meta ? meta.label : "Any time"}
+          {meta && !withHint && <span className="ml-1 font-medium text-muted">· {meta.vi}</span>}
+        </span>
+        {withHint && meta && (
+          <span className="block text-[0.66rem] leading-tight text-muted">
+            {meta.vi} · {meta.hint}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}
 
 /** Image with a shimmer placeholder until it loads; never stretches (object-cover). */
 export function SmartImage({ photo, alt, width = 800, className = "" }: { photo: string; alt: string; width?: number; className?: string }) {

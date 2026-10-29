@@ -17,6 +17,9 @@ const TYPES = {
   other: "⭐ Khác",
 };
 
+// Part of the day ("buổi") exported by the web app.
+const SLOTS = { morning: "Sáng", noon: "Trưa", afternoon: "Chiều", evening: "Tối" };
+
 const topic = process.env.NTFY_TOPIC;
 const server = process.env.NTFY_SERVER || "https://ntfy.sh";
 const timeZone = process.env.TZ_NAME || "Asia/Ho_Chi_Minh";
@@ -37,7 +40,8 @@ function describe(w) {
   const extra = [];
   if (w.duration) extra.push(`${w.duration}′`);
   if (w.distance) extra.push(`${w.distance} km`);
-  let line = `• ${w.time ? `${w.time} ` : ""}${parts.join(": ")}${extra.length ? ` (${extra.join(", ")})` : ""}`;
+  const when = [SLOTS[w.slot], w.time].filter(Boolean).join(" ");
+  let line = `• ${when ? `${when} · ` : ""}${parts.join(": ")}${extra.length ? ` (${extra.join(", ")})` : ""}`;
   if (w.details) line += `\n   ${w.details.replace(/\n/g, "\n   ")}`;
   return line;
 }

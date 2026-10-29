@@ -2,6 +2,16 @@ import type { Units } from "../types";
 
 const KM_TO_MI = 0.621371;
 
+/** Lowercase, accent-free text for matching Vietnamese and English keywords ("Đạp" → "dap"). */
+export function normalize(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase();
+}
+
 export const formatNumber = (n: number) => n.toLocaleString("en-US");
 
 export function formatDistance(km: number, units: Units, digits = 1): string {

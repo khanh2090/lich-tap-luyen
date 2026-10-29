@@ -1,5 +1,6 @@
-import type { SyncSettings, Workout } from "../types";
+import type { Slot, SyncSettings, Workout } from "../types";
 import { addDays, todayKey } from "./dates";
+import { slotMap, sortByDateAndSlot } from "./slots";
 
 // Publishes the training schedule to data/workouts.json in a GitHub repo.
 // A scheduled GitHub Action reads that file every morning and pushes the
@@ -11,6 +12,7 @@ interface ExportedWorkout {
   id: string;
   date: string;
   time?: string;
+  slot: Slot | null;
   type: string;
   title: string;
   duration: number;
@@ -29,13 +31,17 @@ function encodeBase64(text: string): string {
 /** Only the recent past and the future matter to the notifier. */
 export function toExport(workouts: Workout[], today = todayKey()): ExportedWorkout[] {
   const from = addDays(today, -7);
-  return workouts
-    .filter((w) => w.date >= from)
-    .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "99").localeCompare(b.time ?? "99"))
+  const upcoming = workouts.filter((w) => w.date >= from);
+  const slots = new Map<string, Slot | null>();
+  for (const date of new Set(upcoming.map((w) => w.date))) {
+    for (const [id, slot] of slotMap(upcoming.filter((w) => w.date === date))) slots.set(id, slot);
+  }
+  return sortByDateAndSlot(upcoming)
     .map((w) => ({
       id: w.id,
       date: w.date,
       time: w.time,
+      slot: slots.get(w.id) ?? null,
       type: w.category,
       title: w.title,
       duration: w.durationMin,

@@ -9,6 +9,7 @@ import { ConfirmDelete, WorkoutCard } from "../components/WorkoutCard";
 import { EmptyState, SectionHeader } from "../components/ui/primitives";
 import { EXERCISES } from "../data/exercises";
 import { formatDay } from "../lib/dates";
+import { sortDay } from "../lib/slots";
 import { useData } from "../state/store";
 import { useUi } from "../state/ui";
 import type { Workout } from "../types";
@@ -18,7 +19,7 @@ export function OverviewPage() {
   const { navigate, openWorkoutModal } = useUi();
   const [toDelete, setToDelete] = useState<Workout | null>(null);
 
-  const todays = data.workouts.filter((w) => w.date === today).sort((a, b) => (a.time ?? "99").localeCompare(b.time ?? "99"));
+  const todays = sortDay(data.workouts.filter((w) => w.date === today));
   const doneToday = todays.filter((w) => w.status === "completed").length;
   const recommended = EXERCISES.filter((e) => data.profile.favoriteCategories.includes(e.category) && !data.favorites.includes(e.id))
     .sort((a, b) => b.popularity - a.popularity)

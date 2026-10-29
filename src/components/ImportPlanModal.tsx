@@ -6,7 +6,8 @@ import { formatDistance, formatMinutes } from "../lib/format";
 import { nextMonday, parsePlan, readTables, resolveDate, suggestPlanName, TEMPLATE_CSV, type ParsedPlan } from "../lib/plan-import";
 import { useData } from "../state/store";
 import { useUi } from "../state/ui";
-import type { Category } from "../types";
+import type { SlotHint } from "../lib/slots";
+import type { Category, Slot } from "../types";
 import { Modal } from "./ui/Modal";
 
 export function downloadTemplate() {
@@ -99,6 +100,13 @@ export function ImportPlanModal() {
     if (!preview || !file || !name.trim()) return;
     setSaving(true);
     await new Promise((r) => setTimeout(r, 150));
+    // "Right after the previous session" takes that session's slot on the same day.
+    const lastSlot = new Map<string, Slot>();
+    const slotFor = (date: string, hint: SlotHint | null): Slot | undefined => {
+      const slot = hint === "after" ? lastSlot.get(date) : (hint ?? undefined);
+      if (slot) lastSlot.set(date, slot);
+      return slot;
+    };
     const id = importPlan(
       { name: name.trim(), sourceFile: file.name },
       preview.ok.map((r) => ({
@@ -106,6 +114,7 @@ export function ImportPlanModal() {
         category: r.category,
         date: r.resolved!,
         time: r.time,
+        slot: slotFor(r.resolved!, r.slot),
         durationMin: r.durationMin,
         difficulty: r.difficulty,
         calories: r.calories,

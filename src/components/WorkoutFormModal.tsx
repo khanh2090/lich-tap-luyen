@@ -5,7 +5,8 @@ import { CATEGORIES, CATEGORY_ORDER, DIFFICULTIES, DISTANCE_CATEGORIES, estimate
 import { NOTES_MAX } from "../lib/plan-import";
 import { useData, type WorkoutInput } from "../state/store";
 import { useUi } from "../state/ui";
-import type { Category, Difficulty } from "../types";
+import { SLOT_BY_ID, SLOTS, slotFromTime } from "../lib/slots";
+import type { Category, Difficulty, Slot } from "../types";
 import { Modal } from "./ui/Modal";
 
 interface FormState {
@@ -13,6 +14,7 @@ interface FormState {
   category: Category;
   date: string;
   time: string;
+  slot: Slot | "";
   durationMin: string;
   difficulty: Difficulty;
   focus: string;
@@ -87,6 +89,7 @@ export function WorkoutFormModal() {
       category: base.category ?? "strength",
       date: base.date ?? today,
       time: ("time" in base && base.time) || "",
+      slot: ("slot" in base && base.slot) || "",
       durationMin: String(base.durationMin ?? 30),
       difficulty: base.difficulty ?? "Intermediate",
       focus: ("focus" in base && base.focus) || "",
@@ -138,6 +141,7 @@ export function WorkoutFormModal() {
       category: form.category,
       date: form.date,
       time: form.time || undefined,
+      slot: form.slot || undefined,
       durationMin: Math.round(duration),
       difficulty: form.difficulty,
       calories,
@@ -223,6 +227,16 @@ export function WorkoutFormModal() {
         </Field>
         <Field id="wf-date" label="Date" error={errors.date}>
           <input id="wf-date" type="date" className="input" value={form.date} onChange={(e) => set("date", e.target.value)} {...err("date")} />
+        </Field>
+        <Field id="wf-slot" label="Part of day" hint={!form.slot && slotFromTime(form.time) ? `Auto from start time: ${SLOT_BY_ID[slotFromTime(form.time)!].label}` : undefined}>
+          <select id="wf-slot" className="input" value={form.slot} onChange={(e) => set("slot", e.target.value as Slot | "")}>
+            <option value="">Auto (from start time)</option>
+            {SLOTS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label} · {s.vi} ({s.hint})
+              </option>
+            ))}
+          </select>
         </Field>
         <Field id="wf-time" label="Start time (optional)">
           <input id="wf-time" type="time" className="input" value={form.time} onChange={(e) => set("time", e.target.value)} />

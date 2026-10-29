@@ -1,5 +1,7 @@
 import { CATEGORIES, estimateCalories } from "./categories";
 import { addDays, startOfWeek, toKey, todayKey } from "./dates";
+import { normalize } from "./format";
+import { slotFromText, type SlotHint } from "./slots";
 import type { Category, Difficulty } from "../types";
 
 // Turns a training-plan file (CSV, Excel or JSON) into workout rows.
@@ -25,15 +27,6 @@ const HEADERS: Record<Field, string[]> = {
   focus: ["focus", "target", "muctieu", "trongtam", "loaibuoi"],
   done: ["done", "completed", "status", "hoanthanh", "trangthai", "xong", "datap"],
 };
-
-export function normalize(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/Đ/g, "D")
-    .toLowerCase();
-}
 
 const compact = (s: string) => normalize(s).replace(/[^a-z0-9]/g, "");
 
@@ -302,6 +295,8 @@ export interface ImportRow {
   week: number | null;
   weekday: number | null;
   time?: string;
+  /** Part of the day from the slot column; "after" = right after the previous session */
+  slot: SlotHint | null;
   title: string;
   category: Category;
   durationMin: number;
@@ -458,6 +453,7 @@ export function parsePlan(tables: SourceTable[], defaults: { difficulty: Difficu
       week,
       weekday,
       time,
+      slot: slot ? slotFromText(slot) : null,
       title: title.slice(0, 80),
       category,
       durationMin: minutes,

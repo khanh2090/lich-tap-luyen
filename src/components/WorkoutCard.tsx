@@ -4,6 +4,7 @@ import { EXERCISE_BY_ID } from "../data/exercises";
 import { CATEGORIES } from "../lib/categories";
 import { relativeDayLabel } from "../lib/dates";
 import { formatDistance } from "../lib/format";
+import { SLOT_BY_ID, slotMap } from "../lib/slots";
 import { liveProgress, statusOf } from "../lib/stats";
 import { useData } from "../state/store";
 import { useUi } from "../state/ui";
@@ -128,6 +129,7 @@ export function WorkoutCard({ w, onDelete }: { w: Workout; onDelete(w: Workout):
   const status = statusOf(w, today);
   const progress = liveProgress(w, now);
   const volume = volumeLabel(w, data.profile.units);
+  const slot = slotMap(data.workouts.filter((x) => x.date === w.date)).get(w.id) ?? null;
 
   return (
     <article className="card lift group flex flex-col overflow-hidden">
@@ -147,7 +149,7 @@ export function WorkoutCard({ w, onDelete }: { w: Workout; onDelete(w: Workout):
         </div>
         <div className="absolute right-3 bottom-3 left-3 flex items-end justify-between gap-2 text-snow">
           <span className="flex items-center gap-1.5 text-xs font-semibold">
-            <Clock className="size-3.5" /> {w.time ?? relativeDayLabel(w.date)}
+            <Clock className="size-3.5" /> {w.time ?? (slot ? SLOT_BY_ID[slot].label : relativeDayLabel(w.date))}
           </span>
           <span className="display text-2xl leading-none font-bold">
             {w.distanceKm ? volume : `${w.durationMin}`}
