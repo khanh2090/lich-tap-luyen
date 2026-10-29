@@ -4,13 +4,15 @@
 
 import { readFile } from "node:fs/promises";
 
+// Keys match the PULSE web app categories (src/lib/categories.ts).
 const TYPES = {
-  run: "🏃 Chạy",
-  swim: "🏊 Bơi",
-  bike: "🚴 Đạp xe",
-  brick: "🔁 Brick",
   strength: "🏋️ Sức mạnh",
-  rest: "😴 Nghỉ",
+  cardio: "❤️ Cardio",
+  hiit: "⚡ HIIT",
+  yoga: "🧘 Yoga & Mobility",
+  running: "🏃 Chạy bộ",
+  cycling: "🚴 Đạp xe",
+  recovery: "🔋 Hồi phục",
   other: "⭐ Khác",
 };
 
@@ -34,7 +36,7 @@ function describe(w) {
   const extra = [];
   if (w.duration) extra.push(`${w.duration}′`);
   if (w.distance) extra.push(`${w.distance} km`);
-  let line = `• ${parts.join(": ")}${extra.length ? ` (${extra.join(", ")})` : ""}`;
+  let line = `• ${w.time ? `${w.time} ` : ""}${parts.join(": ")}${extra.length ? ` (${extra.join(", ")})` : ""}`;
   if (w.details) line += `\n   ${w.details.replace(/\n/g, "\n   ")}`;
   return line;
 }

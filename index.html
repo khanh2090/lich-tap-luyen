@@ -1,90 +1,19 @@
 <!doctype html>
-<html lang="vi">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f766e">
-  <title>Lịch tập luyện</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <header class="topbar">
-    <h1>Lịch tập luyện</h1>
-    <button id="btn-settings" class="icon-btn" aria-label="Cài đặt">⚙️</button>
-  </header>
-
-  <main>
-    <div id="status" class="status" hidden></div>
-
-    <nav class="tabs" role="tablist">
-      <button class="tab active" data-filter="upcoming" role="tab">Sắp tới</button>
-      <button class="tab" data-filter="past" role="tab">Đã qua</button>
-      <button class="tab" data-filter="all" role="tab">Tất cả</button>
-    </nav>
-
-    <section id="list" class="list" aria-live="polite"></section>
-  </main>
-
-  <button id="btn-add" class="fab" aria-label="Thêm bài tập">＋</button>
-
-  <dialog id="dlg-workout">
-    <form id="form-workout" method="dialog">
-      <h2 id="form-title">Thêm bài tập</h2>
-      <label>Ngày
-        <input type="date" name="date" required>
-      </label>
-      <label>Môn
-        <select name="type">
-          <option value="run">🏃 Chạy</option>
-          <option value="swim">🏊 Bơi</option>
-          <option value="bike">🚴 Đạp xe</option>
-          <option value="brick">🔁 Brick</option>
-          <option value="strength">🏋️ Sức mạnh</option>
-          <option value="rest">😴 Nghỉ / hồi phục</option>
-          <option value="other">⭐ Khác</option>
-        </select>
-      </label>
-      <label>Tên bài
-        <input type="text" name="title" required maxlength="100" placeholder="VD: Chạy interval 6×800m">
-      </label>
-      <div class="row">
-        <label>Thời lượng (phút)
-          <input type="number" name="duration" min="0" step="1" inputmode="numeric">
-        </label>
-        <label>Cự ly (km)
-          <input type="number" name="distance" min="0" step="0.1" inputmode="decimal">
-        </label>
-      </div>
-      <label>Ghi chú
-        <textarea name="details" rows="3" maxlength="1000" placeholder="Pace, nhịp tim, khởi động..."></textarea>
-      </label>
-      <div class="actions">
-        <button type="button" id="btn-cancel" class="btn">Huỷ</button>
-        <button type="submit" class="btn primary">Lưu</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="dlg-settings">
-    <form id="form-settings" method="dialog">
-      <h2>Cài đặt</h2>
-      <p class="hint">Dữ liệu được lưu trong file <code>data/workouts.json</code> của repo GitHub. Để thêm/sửa bài tập, nhập GitHub token (fine-grained, quyền <b>Contents: Read and write</b> cho repo này). Token chỉ lưu trên trình duyệt này.</p>
-      <label>Chủ repo (owner)
-        <input type="text" name="owner" required autocomplete="off">
-      </label>
-      <label>Tên repo
-        <input type="text" name="repo" required autocomplete="off">
-      </label>
-      <label>GitHub token
-        <input type="password" name="token" autocomplete="off" placeholder="github_pat_...">
-      </label>
-      <div class="actions">
-        <button type="button" id="btn-settings-cancel" class="btn">Đóng</button>
-        <button type="submit" class="btn primary">Lưu</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script src="app.js"></script>
-</body>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#10131F" />
+    <meta name="description" content="PULSE — plan, track and level up your training. Move better. Get stronger." />
+    <title>PULSE — Move Better. Get Stronger.</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23C6FF3D'/%3E%3Cpath d='M5 17h5l3-8 5 15 3-9h6' fill='none' stroke='%2310131F' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
